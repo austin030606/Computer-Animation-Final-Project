@@ -1,4 +1,5 @@
 import numpy as np
+import pygame
 
 def swap(a: np.array, b: np.array):
     tmp = b
@@ -30,6 +31,7 @@ class Fluid(Simulation):
         self.velocityY = np.zeros(shape)
         self.velocityY_prev = np.zeros(shape)
         self.data = self.density # set the data for displaying purposes
+        self.forceStrength = 10 # Amount of force add per click
         pass
 
     def set_bnd(self, b, x: np.array):
@@ -132,6 +134,12 @@ class Fluid(Simulation):
         self.densityUpdate()
         self.velocityUpdate()
 
-    def Handle(event, row=0, col=0):
+    def Handle(self, event, mousePos, cellSize):
         # handle fluid states based on event type and mouse position
-        pass
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            # Convert the mouse position to array indices
+            col = mousePos[0] // cellSize
+            row = mousePos[1] // cellSize
+            
+            # Add force at mouse position
+            self.data[row][col] += self.forceStrength

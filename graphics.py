@@ -27,7 +27,7 @@ class Graphics:
                 return False
             else:
                 mousePos = pygame.mouse.get_pos()
-                self.sim.Handle(event, mousePos)
+                self.sim.Handle(event, mousePos, self.cellSize)
         return True
         pass
 
@@ -38,4 +38,26 @@ class Graphics:
     def updateFrame(self):
         # update frame output
         # clear frame then draw each box using the value in sim.data
-        pass
+
+        # Clear the screen
+        self.screen.fill((0, 0, 0))
+
+        # Draw the current frame
+        for row in range(self.sim.row):
+            for col in range(self.sim.col):
+                if self.sim.data[row][col] > 0:
+                    # define each cell's area
+                    colored_cell_area = pygame.Rect(col * self.cellSize, row * self.cellSize, self.cellSize, self.cellSize)
+
+                    # define cell intensity based on density value in sim.data
+                    cell_intensity = self.sim.data[row][col]
+                    cell_intensity = min(255, cell_intensity)
+                    color_intensity = (cell_intensity, cell_intensity, cell_intensity)
+
+                    # Draw using cell's area and intensity
+                    pygame.draw.rect(self.screen, color_intensity, colored_cell_area)
+
+        # Update the screen
+        pygame.display.flip()
+        # Update 1 frame per second
+        self.clock.tick(1)
