@@ -59,5 +59,3 @@ class Graphics:
 
         # Update the screen
         pygame.display.flip()
-        # Update 1 frame per second
-        self.clock.tick(1)
