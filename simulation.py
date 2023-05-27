@@ -1,12 +1,13 @@
 import pygame
 
+
 def swap(a: list, b: list):
     tmp = b
     b = a
     a = tmp
 
 class Simulation:
-    def __init__(self, row=100, col=100, dt=0.0001):
+    def __init__(self, row=50, col=50, dt=0.0001):
         self.dt = dt
         self.row = row
         self.col = col
@@ -31,6 +32,7 @@ class Fluid(Simulation):
         self.velocityY_prev = [ [0]*col for i in range(row)]
         self.data = self.density # set the data for displaying purposes
         self.forceStrength = 10000 # Amount of force add per click
+        self.square_bnd = False
         pass
 
     def set_bnd(self, b, x: list):
@@ -45,14 +47,31 @@ class Fluid(Simulation):
         x[N + 1][0] = 0.5 * (x[N][0] + x[N + 1][1])
         x[N + 1][N + 1] = 0.5 * (x[N][N + 1] + x[N + 1][N])
 
+        if(self.square_bnd):
+            sqr_flr = int(self.row / 2) - 5
+            sqr_cel = int(self.row / 2) + 5
+            for i in range(sqr_flr, sqr_cel + 1):
+                x[sqr_flr][i]     = -1 * x[sqr_flr - 1][i] if b == 1 else x[sqr_flr - 1][i]
+                x[sqr_cel][i] = -1 * x[sqr_cel + 1][i] if b == 1 else x[sqr_cel + 1][i]
+                x[i][sqr_flr]     = -1 * x[i][sqr_flr - 1] if b == 2 else x[i][sqr_flr - 1]
+                x[i][sqr_cel + 0] = -1 * x[i][sqr_cel + 1] if b == 2 else x[i][sqr_cel + 1]
+
+            for i in range(sqr_flr + 1, sqr_cel):
+                for j in range(sqr_flr + 1, sqr_cel):
+                    x[i][j] = 0
 
     def diffuse(self,b , x: list, x0: list):
         N = self.row - 2
-        k = 20
+        k = 10
         a = self.dt * N * N
         for _ in range(k):
             for i in range(1, N + 1):
                 for j in range(1, N + 1):
+                    if(self.square_bnd):
+                        if j in range(int(self.row / 2) - 4, int(self.row / 2) + 5):
+                            if i in range(int(self.row / 2) - 4, int(self.row / 2) + 5):
+                                continue
+
                     x[i][j] = (x0[i][j] + a * (x[i - 1][j] + x[i + 1][j] + x[i][j - 1] + x[i][j + 1])) / (1 + 4 * a)
             self.set_bnd(b, x)
         pass
@@ -104,7 +123,7 @@ class Fluid(Simulation):
         self.set_bnd(0, div)
         self.set_bnd(0, p)
 
-        for _ in range(20):
+        for _ in range(10):
             for i in range(1, N + 1):
                 for j in range(1, N + 1):
                     p[i][j] = (div[i][j] + p[i - 1][j] + p[i + 1][j] + p[i][j - 1] + p[i][j + 1]) / 4
@@ -122,7 +141,7 @@ class Fluid(Simulation):
     def velocityUpdate(self):
         # update velocity grid
         self.diffuse(1, self.velocityX_prev, self.velocityX)
-        self.diffuse(1, self.velocityY_prev, self.velocityY)
+        self.diffuse(2, self.velocityY_prev, self.velocityY)
         self.project(self.velocityX_prev, self.velocityY_prev, self.velocityX, self.velocityY)
         self.advect(1, self.velocityX, self.velocityX_prev, self.velocityX_prev, self.velocityY_prev)
         self.advect(2, self.velocityY, self.velocityY_prev, self.velocityX_prev, self.velocityY_prev)
@@ -144,3 +163,13 @@ class Fluid(Simulation):
             self.density[row][col] += self.forceStrength
             self.velocityX[row][col] += self.forceStrength
             self.velocityY[row][col] += self.forceStrength
+            
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                if self.square_bnd == True:
+                    self.square_bnd = False
+                elif self.square_bnd == False:
+                    self.square_bnd = True
+            elif event.key == pygame.K_RETURN:
+                # Return/Enter key pressed, trigger another action
+                print("Return/Enter key pressed")
