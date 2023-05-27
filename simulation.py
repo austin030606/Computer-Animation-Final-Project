@@ -1,17 +1,16 @@
-import numpy as np
 import pygame
 
-def swap(a: np.array, b: np.array):
+def swap(a: list, b: list):
     tmp = b
     b = a
     a = tmp
 
 class Simulation:
-    def __init__(self, row=100, col=100, dt=0.001):
+    def __init__(self, row=100, col=100, dt=0.0001):
         self.dt = dt
         self.row = row
         self.col = col
-        self.data = np.zeros((row, col)) # data to display
+        self.data = [ [0]*col for i in range(row)] # data to display
         pass
 
     def Update():
@@ -21,20 +20,20 @@ class Simulation:
         pass
 
 class Fluid(Simulation):
-    def __init__(self, row=100, col=100, dt=0.001):
+    def __init__(self, row=100, col=100, dt=0.0001):
         super().__init__(row, col, dt)
         shape = (row, col)
-        self.density = np.zeros(shape)
-        self.density_prev = np.zeros(shape)
-        self.velocityX = np.zeros(shape)
-        self.velocityX_prev = np.zeros(shape)
-        self.velocityY = np.zeros(shape)
-        self.velocityY_prev = np.zeros(shape)
+        self.density = [ [0]*col for i in range(row)]
+        self.density_prev = [ [0]*col for i in range(row)]
+        self.velocityX = [ [0]*col for i in range(row)]
+        self.velocityX_prev = [ [0]*col for i in range(row)]
+        self.velocityY = [ [0]*col for i in range(row)]
+        self.velocityY_prev = [ [0]*col for i in range(row)]
         self.data = self.density # set the data for displaying purposes
-        self.forceStrength = 10 # Amount of force add per click
+        self.forceStrength = 10000 # Amount of force add per click
         pass
 
-    def set_bnd(self, b, x: np.array):
+    def set_bnd(self, b, x: list):
         N = self.row - 2
         for i in range(1, N + 1):
             x[0][i]     = -1 * x[1][i] if b == 1 else x[1][i]
@@ -47,18 +46,18 @@ class Fluid(Simulation):
         x[N + 1][N + 1] = 0.5 * (x[N][N + 1] + x[N + 1][N])
 
 
-    def diffuse(self,b , x: np.array, x0: np.array):
+    def diffuse(self,b , x: list, x0: list):
         N = self.row - 2
         k = 20
         a = self.dt * N * N
         for _ in range(k):
             for i in range(1, N + 1):
                 for j in range(1, N + 1):
-                    x[i][j] = (x0[i][j] + a * (x[i - 1][j] + x[i + 1][j] + x[i][j - 1] + x[i][j + 1]) / (1 + 4 * a))
+                    x[i][j] = (x0[i][j] + a * (x[i - 1][j] + x[i + 1][j] + x[i][j - 1] + x[i][j + 1])) / (1 + 4 * a)
             self.set_bnd(b, x)
         pass
 
-    def advect(self, b, d: np.array, d0: np.array, u: np.array, v: np.array):
+    def advect(self, b, d: list, d0: list, u: list, v: list):
         N = self.row - 2
         dt0 = self.dt * self.row
         for i in range(1, N + 1):
@@ -95,7 +94,7 @@ class Fluid(Simulation):
         self.advect(0, self.density, self.density_prev, self.velocityX, self.velocityY)
         pass
 
-    def project(self, u: np.array, v: np.array, p: np.array, div: np.array):
+    def project(self, u: list, v: list, p: list, div: list):
         N = self.row - 2
         h = 1 / N
         for i in range(1, N + 1):
@@ -131,8 +130,8 @@ class Fluid(Simulation):
         pass
 
     def Update(self):
-        self.densityUpdate()
         self.velocityUpdate()
+        self.densityUpdate()
 
     def Handle(self, event, mousePos, cellSize):
         # handle fluid states based on event type and mouse position
@@ -142,4 +141,6 @@ class Fluid(Simulation):
             row = mousePos[1] // cellSize
             
             # Add force at mouse position
-            self.data[row][col] += self.forceStrength
+            self.density[row][col] += self.forceStrength
+            self.velocityX[row][col] += self.forceStrength
+            self.velocityY[row][col] += self.forceStrength
